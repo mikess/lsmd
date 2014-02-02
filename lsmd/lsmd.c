@@ -22,10 +22,26 @@
 #include "lsmd.h"
 #include "../sysvinit/src/reboot.h"
 
+
+int __init_sig(void);
+int __init_svm(void);
+int __check_proc(void);
+
+
+void do_reboot(void);
+
 /*
- * do_reboot - initialize reboot procedure
+ *	__init_sig - initialize signal handlers
  */
-void do_reboot()
+int __init_sig(void)
+{
+	
+}
+
+/*
+ *	do_reboot - initialize reboot procedure
+ */
+void do_reboot(void)
 {
 //	init_reboot(BMAGIC_REBOOT);
 	sleep(10);
@@ -34,7 +50,7 @@ void do_reboot()
 }
 
 /*
- * __check_proc - check /proc is mount
+ * 	__check_proc - check /proc is mount
  *
  * TODO: check process 1
  *
@@ -49,7 +65,7 @@ int __check_proc(void)
 
 
 /*
- * __init_svm - initialize SVM process
+ *	__init_svm - initialize SVM process
  *
  */
 int __init_svm(int argc, char **argv)
