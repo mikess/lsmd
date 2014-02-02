@@ -28,6 +28,9 @@ int __init_svc(void);
 int __check_proc(void);
 
 
+int 
+
+
 void do_reboot(void);
 
 /*

@@ -1,0 +1,21 @@
+Scheme of directory tree is in lsmd/lsmd/SVC_SCHEME
+
+1. Reading configuration from /run/svc/services/*/
+	eg.:
+	/run/svc/services/network/httpd/httpd.svc
+
+2. Registering process on filesystem
+	eg.:
+	/run/svc/current/online/network/httpd/
+
+3. Integrate lsmd with SysV Init - starting services
+   with runlevels
+
+4. Make template of service and instances
+   choose between style like systemd or bash script parsing?
+
+5. Monitoring service and watching status. Define action
+   eg. "if service is down - auto restart after 5 sec"
+
+6. Make service CLI console for configure and managing
+   services
