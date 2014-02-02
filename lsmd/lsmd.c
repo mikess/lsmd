@@ -1,5 +1,5 @@
 /*
- * svinit.c - Core process to start and stop services.
+ * lsmd.c - Core process to start and stop services.
  *
  * Copyright (C) 2013 Michal Kulling <mike@mikes.pl>
  *
@@ -24,7 +24,7 @@
 
 
 int __init_sig(void);
-int __init_svm(void);
+int __init_svc(void);
 int __check_proc(void);
 
 
@@ -65,10 +65,10 @@ int __check_proc(void)
 
 
 /*
- *	__init_svm - initialize SVM process
+ *	__init_svc - initialize SVC process
  *
  */
-int __init_svm(int argc, char **argv)
+int __init_svc(int argc, char **argv)
 {
 	if(__check_proc()){
 		printf("Unable to open /proc directory! /proc is mounted? Rebooting... ");
@@ -81,12 +81,18 @@ int __init_svm(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+	printf("Linux Service Management Daemon v0.1\n");
+
+	if(argc == 1){
+		printf("Starting LSMD...");
+	}	
+
 	int ret;
 	
-	ret = __init_svm(argc, argv);
+	ret = __init_svc(argc, argv);
 	
 	if(ret > 0){
-		printf("Failed to initialize SVM process!\n");
+		printf("Failed to initialize SVC process!\n");
 		exit(-EFAULT);
 	}
 	

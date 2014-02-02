@@ -11,3 +11,32 @@
 /* Default place for services */
 #define SVCROOT	"/run/svc/"
 #define SVC_STAT "/run/svc/current/"
+
+/*
+ * sinst_s	- service instance structure
+ * 
+ * @sid		- service parent ID
+ * @iname	- instance name
+ * @ipath	- path to status
+ * @fpid	- path to pidfile
+ * @fsock	- path to socket
+ */
+struct sinst_s {
+	int sid;
+	char *name;
+	char *ipath;
+	char *fpid;
+	char *fsock;
+	char *factivator;
+};
+
+/*
+ *  svcs_s	- structure for services
+ *
+ *  @sid	- service ID
+ *  @sname	- service name
+ *  @instances 	- service instances sinst_s
+ */
+struct ssvc_s {
+
+};
