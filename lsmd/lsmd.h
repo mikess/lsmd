@@ -1,0 +1,1 @@
+#define PROCDIR		"/procd"
