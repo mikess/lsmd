@@ -2,7 +2,7 @@ LSMD
 ====
 
 Linux Service Management Daemon
-=
+=====
 
 A lightweight service management daemon for linux based on SysV Init.
 
