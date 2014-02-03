@@ -1,7 +1,7 @@
 /*
  * svc_start.c	- start services and instances functions
  *
- * Copyright (C) 2013 Michal Kulling <mike@mikes.pl>
+ * Copyright (C) 2014 Michal Kulling <mike@mikes.pl>
  *
  */
 
@@ -18,17 +18,6 @@
 #include <pwd.h>
 
 #include "lsmd.h"
-
-#define SVC_TYPE_APP	1
-#define SVC_APP		"applications"
-#define SVC_TYPE_NET	2
-#define SVC_NET		"network"
-#define SVC_TYPE_SYS	3
-#define SVC_SYS		"system"
-#define SVC_TYPE_MGMT	4
-#define SVC_MGMT	"management"
-#define SVC_TYPE_USER	5
-#define SVC_USER	"user"
 
 static const char *service = "";
 static const char *instance = "";
@@ -58,34 +47,28 @@ struct ssvc_t{
 	struct ssvc_t *next;
 } svc_first;
 
-int svc_register_service(struct)
-{
-		
-}
-
 /*
  * svc_start_service - start a service and instances
  *
- * @service - struct with service information
+ * @service_name - service name
+ * @instance	 - name of next instance
  */
 int svc_start_service(const char *service_name, const char *instance)
 {
-	/*
-	 * Looking for services service_name
-	 *	
-	 * /etc/lsmd/svc.list
-	 *	
-	 */
-	
 	char service_path[256];
 	service_path[0] = '\0';
-	strcat(service_path, SVC_SERVICES);
-	strcat(service_path, service_name);
+	//strcat(service_path, SVC_SERVICES);
+	//strcat(service_path, service_name);
 
+	sprintf(service_path, "%s/%s", SVC_SERVICES, service_name);
+	
 	if(strlen(instance) > 0){
-		strcat(service_path, "/");
-		strcat(service_path, instance);
+		//strcat(service_path, "/");
+		//strcat(service_path, instance);
+		sprintf(service_path, "%s/%s", service_path, instance);
 	}
+
+	printf("%s\n", service_path);
 	
 	DIR *svpath;
 	struct dirent *ep;

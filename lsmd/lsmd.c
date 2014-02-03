@@ -1,7 +1,7 @@
 /*
  * lsmd.c - Core process to start and stop services.
  *
- * Copyright (C) 2013 Michal Kulling <mike@mikes.pl>
+ * Copyright (C) 2014 Michal Kulling <mike@mikes.pl>
  *
  */
 
