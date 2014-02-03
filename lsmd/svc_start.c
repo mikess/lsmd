@@ -58,10 +58,10 @@ struct ssvc_t{
 	struct ssvc_t *next;
 } svc_first;
 
-/*int svc_register_service(struct)
+int svc_register_service(struct)
 {
-	
-}*/
+		
+}
 
 /*
  * svc_start_service - start a service and instances
@@ -87,8 +87,6 @@ int svc_start_service(const char *service_name, const char *instance)
 		strcat(service_path, instance);
 	}
 	
-	printf("path: >%s<\n", service_path);
-
 	DIR *svpath;
 	struct dirent *ep;
 	svpath = opendir(service_path);
