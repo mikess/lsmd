@@ -119,6 +119,9 @@ int __init_svc(int argc, char **argv)
 	
 }
 
+
+char *
+
 int main(int argc, char **argv)
 {
 	printf("Linux Service Management Daemon v0.1\n");
