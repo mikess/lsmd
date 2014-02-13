@@ -1,5 +1,5 @@
 /*
- * svc_sart.c	- start daemont
+ * svmanage.c	- manage service and/or instances
  *
  * Copyright (C) 2014 Michal Kulling <mike@mikes.pl>
  *
@@ -31,6 +31,7 @@ int f_stop = 0;
 
 int exec_pid = -1;
 
+char *errstring;
 
 struct sinst_s {
         int sid;
@@ -90,14 +91,10 @@ int svc_start_service(const char *service_name, const char *instance)
 {
 	char service_path[256];
 	service_path[0] = '\0';
-	//strcat(service_path, SVC_SERVICES);
-	//strcat(service_path, service_name);
 
 	sprintf(service_path, "%s/%s", SVC_SERVICES, service_name);
 	
 	if(strlen(instance) > 0){
-		//strcat(service_path, "/");
-		//strcat(service_path, instance);
 		sprintf(service_path, "%s/%s", service_path, instance);
 	}
 
@@ -189,6 +186,7 @@ void show_help(void)
 	       "LSMD v0.1 (C) 2014 Michal Kulling\n",
 	       "Usage:\n",
 	       "  service [start|stop|restart|status|reload] [service|instance] {-soihHFD}\n");
+	exit(1);
 }
 
 int main(int argc, char **argv)
@@ -202,25 +200,61 @@ int main(int argc, char **argv)
 	 * Check short functions start, stop, restart, status
 	 */
 
-	if(!strcmp("start", argv[1])){
+	if(!strcmp("start", argv[1])) {
+		
 		if(argc < 2)
 			show_help();
 
-		if(init_service(argv[1])){
-			printf("
+		service = argv[2];
+
+		int svc_read = svc_read_service_cfg(service);
+
+		if(svc_read == 1)
+			svc_start_service();
+		
+		/*
+		 * If configuration file isn't completed or
+		 * syntax error occured
+		 */ 
+		if(svc_read == -1){
+			printf("Configuration file isn't completed or syntax error occured:\n%s", errstring);
+			return -EFAULT;
+		}
+
+		/*
+		 * Service/instance not found
+		 */
+		if(svc_read == 0){
+			printf("%s - Service or instance not found.\n", service);
+			return -EFAULT;
 		}
 	}
-	if(!strcmp("start", argv[1]);
-	
+
+	if(!strcmp("stop", argv[1])) {
+		if(argc < 2)
+			show_help();
+
+		service = argv[2];
+
+		int svc_read = svc_read_service_cfg(service);
+		
+		if(svc_read)
+			svc_stop_service();
+
+		if(!svc_read){
+			printf("Cannot stop service \"%s\" daemon.\n", service);
+		}
+	}
+
+	if(!strcmp("status", argv[1])) {
+		if(argc < 2)
+			show_help();
+
+			
+	}
 	parse_argv(argc, argv);
 	argc -= optind;
 	argv += optind;
-
-	service = argv[1];	
-
-	if(argc > 2){
-		instance = argv[2];
-	}
 
 	svc_start_service(service,instance);
 
