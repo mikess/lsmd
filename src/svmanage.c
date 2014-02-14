@@ -61,6 +61,13 @@ struct ssvc_t{
 char *__exec_path;
 char *__exec_params;
 
+
+int svc_read_service_cfg(void)
+{
+	
+}
+
+
 /*
  * svc_exec_service - execute a service
  *
