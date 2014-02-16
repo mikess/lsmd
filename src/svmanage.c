@@ -26,46 +26,148 @@ static const char *exec_path = NULL;
 static const char *exec_params = NULL;
 static const char *pidfile = NULL;
 
+static const int valsize = 5000;
+
 int f_start = 0;
 int f_stop = 0;
 
+
 int exec_pid = -1;
 
-char *errstring;
 
-struct sinst_s {
-        int sid;
-        char *name;
-        char *ipath;
-        char *fpid;
-        char *fsock;
-        char *factivator;
-} svc_inst;
-
-
-struct ssvc_t{
-	int sid;
-	int type;
-	char *sname;
-	struct sinst_s *instances[10];
-	char *activatod; // Not used
-	char *pidfile;
-	char *execpath;
-	uid_t owner;
-	gid_t group;
-	char depends[64];
-	int actions[64];
-	struct ssvc_t *next;
-} svc_first;
-
-char *__exec_path;
-char *__exec_params;
+/*
+ * Define parameters
+ */
+char *Name = NULL;
+char *Depends = NULL;
+char *ExecPath = NULL;
+char *ExecParams = NULL;
+char *PIDFile = NULL;
+char *Owner = NULL;
+char *Group = NULL;
 
 
-int svc_read_service_cfg(void)
+void show_help(void);
+
+/*
+ * parse_config - match variable name and assigne value
+ *
+ * @var		- variable name
+ * @val		- value
+ * @line	- which line
+ *
+ * TODO: do tests for paths
+ *
+ */
+int parse_config(char var[100], char val[valsize], int line)
 {
-	
+	if(!strcmp(var, "Name")){
+		sprintf(Name,"%s", val);
+		return 1;
+	}else
+	if(!strcmp(var, "Depends")){
+		sprintf(Depends,"%s", val);
+		return 1;
+	}else
+	if(!strcmp(var, "ExecPath")){
+		sprintf(ExecPath,"%s", val);
+		/*
+		 * Check exists and executable
+		 */
+		return 1;
+	}else
+	if(!strcmp(var, "ExecParams")){
+		sprintf(ExecParams,"%s", val);
+		return 1;
+	}else
+	if(!strcmp(var, "PIDFile")){
+		sprintf(PIDFile,"%s", val);
+		return 1;
+	}else
+	if(!strcmp(var, "Owner")){
+		sprintf(Owner,"%s", val);
+		/* Verify exists */
+		return 1;
+	}else
+	if(!strcmp(var, "Group")){
+		sprintf(Group,"%s", val);
+		/* Verify exists */
+	}else{
+		printf("Error at line #%d - unrecognized variable %s\n", line, var);
+		return 0;
+	}
+	/* */
 }
+
+/*
+ * svc_read_config - read a configuration file
+ *
+ * @svconfig 	- path to config file
+ *
+ */
+int svc_read_config(char *svconfig)
+{
+	struct stat fcheck = {0};
+	unsigned int filesize = 0;
+	char *buffer = 0;
+	char var[100], val[valsize];
+	int res=0, line=1;
+
+	if(stat(svconfig,&fcheck) != 0)
+		return 0;
+
+	FILE *fd;
+	fd = fopen(svconfig, "r");
+	
+	if(fd < 0){
+		printf("Cannot open %s for read!\n", svconfig);
+		return 0;
+	}
+
+	/*
+	 * Get lines count
+	 */
+	fseek(fd, 0, SEEK_END);
+	filesize = ftell(fd);
+	fseek(fd,0,0);
+	
+	/*
+	 * Allocate memory for buffer
+	 */
+	buffer = (char*) malloc(sizeof(char)*(filesize +1));
+
+	fread(buffer, sizeof(char), filesize, fd);
+	buffer[filesize] = '\0';
+	fclose(fd);
+
+	/*
+	 * Read a buffer and verify syntax
+	 */
+	char const * _buffer = buffer;
+	while((res = sscanf(_buffer, "%[^\n=]=%[^\n]", var, val)) > -1) {
+		if(res == 2 && var[0] != '#')
+		if(!parse_config(var, val, line)){
+			exit -1;
+		}
+		_buffer = strstr(_buffer, "\n")+1;
+		line++;
+	}
+	
+	free(buffer);
+	return 1;
+}
+
+/*int main()
+{
+	ExecPath = (char*)malloc(sizeof(ExecPath)+valsize);
+	PIDFile = (char*)malloc(sizeof(char*)+valsize);
+	char *t = "test.txt";
+	int ret = svc_read_config(t);
+	if(ret != 0){
+		printf("ExecPath: %s: %d\n", ExecPath, strlen(ExecPath));
+	}
+	return 1;
+}*/
 
 
 /*
@@ -79,7 +181,7 @@ int svc_read_service_cfg(void)
  *
  */
 
-pid_t svc_exec_service(char *exec_path, char *exec_params)
+pid_t svc_exec_service(char *exec_path, char **exec_params)
 {
 	struct stat sexec = {0};
 	
@@ -92,9 +194,8 @@ pid_t svc_exec_service(char *exec_path, char *exec_params)
  * svc_start_service - start a service and instances
  *
  * @service_name - service name
- * @instance	 - name of next instance
  */
-int svc_start_service(const char *service_name, const char *instance)
+int svc_start_service(char *service_name)
 {
 	char service_path[256];
 	service_path[0] = '\0';
@@ -134,7 +235,7 @@ void parse_argv(int argc, char * const *argv)
 
 	int c;
 
-	for(;;;) {
+	for(;;) {
 		c = getopt_long(argc, argv, "hnvpPsS:",
 				longopts, (int *) 0);
 
@@ -172,27 +273,21 @@ void parse_argv(int argc, char * const *argv)
 
 }
 
-int check_argv(char *arg)
-{
-	if(!strncmp("start",arg,6))
-		f_start = 1;
-	
-	if(!strncmp("stop",arg,5))
-		f_stop = 1;
-	
-	if(!strncmp("restart",arg,8))
-		f_restart = 1;
-
-	if(!strncmp("status",arg,7))
-		f_status = 1;
-}
-
 void show_help(void)
 {
 	printf("service - control and manage system services\n",
-	       "LSMD v0.1 (C) 2014 Michal Kulling\n",
-	       "Usage:\n",
-	       "  service [start|stop|restart|status|reload] [service|instance] {-soihHFD}\n");
+		"LSMD v0.1 (C) 2014 Michal Kulling\n",
+		"Usage:\n",
+		"  service [start|stop|restart|status|reload] [service|instance] {-soihHFD}\n\n",
+		"\t-e, --exec\t - path to service executable file\n",
+		"\t-h, --help\t - show this help\n",
+		"\t-i, --instance\t - specify instance name\n",
+		"\t-n, --name\t - specify the name of service\n",
+		"\t-p, --pidfile\t - specify path to pidfile\n",
+		"\t-P, --params\t - specify parameters for service which was include\n",
+		"\t-s, --start\t - start service\n",
+		"\t-S, --stop\t - stop service\n",
+		"\t-v, --version\t - show version of lsmd\n");
 	exit(1);
 }
 
@@ -214,18 +309,18 @@ int main(int argc, char **argv)
 
 		service = argv[2];
 
-		int svc_read = svc_read_service_cfg(service);
+		int svc_read = svc_read_config(service);
 
 		if(svc_read == 1)
-			svc_start_service();
+			svc_start_service(service);
 		
 		/*
 		 * If configuration file isn't completed or
 		 * syntax error occured
 		 */ 
 		if(svc_read == -1){
-			printf("Configuration file isn't completed or syntax error occured:\n%s", errstring);
-			return -EFAULT;
+			printf("Configuration file isn't completed or syntax error occured.\n");
+			return 1;
 		}
 
 		/*
@@ -233,7 +328,7 @@ int main(int argc, char **argv)
 		 */
 		if(svc_read == 0){
 			printf("%s - Service or instance not found.\n", service);
-			return -EFAULT;
+			return 1;
 		}
 	}
 
@@ -263,9 +358,8 @@ int main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	svc_start_service(service,instance);
+	svc_start_service(service);
 
 	return 0;
 }
-
 

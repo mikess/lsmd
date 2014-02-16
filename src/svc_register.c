@@ -33,3 +33,5 @@ int svc_reg_service(char *sname, char *stype, int status, ssvc_s servinfo)
 {
 	
 }
+
+int svc_unreg_service(char *sname, char *stype);
