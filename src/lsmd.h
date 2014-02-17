@@ -4,7 +4,7 @@
 
 #define PROCDIR		"/proc"
 
-#define SVC_SERVICES	"/run/svc/services"
+#define SVC_SERVICES	"/etc/svcs/"
 #define SVC_CONF	"/etc/lsmd/lsmd.conf"
 
 

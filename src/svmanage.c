@@ -102,25 +102,32 @@ int parse_config(char var[100], char val[valsize], int line)
 /*
  * svc_read_config - read a configuration file
  *
- * @svconfig 	- path to config file
+ * @service 	- service or instance name
  *
  */
-int svc_read_config(char *svconfig)
+int svc_read_config(const char *service)
 {
+	FILE *fd;
 	struct stat fcheck = {0};
 	unsigned int filesize = 0;
 	char *buffer = 0;
 	char var[100], val[valsize];
 	int res=0, line=1;
 
-	if(stat(svconfig,&fcheck) != 0)
-		return 0;
+	char service_path[256];
+	service_path[0] = '\0';
 
-	FILE *fd;
-	fd = fopen(svconfig, "r");
+	sprintf(service_path, "%s/%s.conf", SVC_SERVICES, service);
+
+	if(stat(service_path,&fcheck) != 0){
+		printf("Cannot find %s service - %s\n", service, service_path);
+		return 0;
+	}
+
+	fd = fopen(service_path, "rt");
 	
 	if(fd < 0){
-		printf("Cannot open %s for read!\n", svconfig);
+		printf("Cannot open %s for read!\n", service_path);
 		return 0;
 	}
 
@@ -131,11 +138,19 @@ int svc_read_config(char *svconfig)
 	filesize = ftell(fd);
 	fseek(fd,0,0);
 	
+	printf("FS: %d\n", filesize);
 	/*
-	 * Allocate memory for buffer
+	 * Allocate memory for buffers and variables
 	 */
 	buffer = (char*) malloc(sizeof(char)*(filesize +1));
-
+	Name = (char*)malloc(sizeof(char*)+valsize);
+	Depends = (char*)malloc(sizeof(char*)+valsize);
+	ExecPath = (char*)malloc(sizeof(char*)+valsize);
+	ExecParams = (char*)malloc(sizeof(char*)+valsize);
+	PIDFile = (char*)malloc(sizeof(char*)+valsize);
+	Owner = (char*)malloc(sizeof(char*)+valsize);
+	Group = (char*)malloc(sizeof(char*)+valsize);
+	
 	fread(buffer, sizeof(char), filesize, fd);
 	buffer[filesize] = '\0';
 	fclose(fd);
@@ -156,18 +171,6 @@ int svc_read_config(char *svconfig)
 	free(buffer);
 	return 1;
 }
-
-/*int main()
-{
-	ExecPath = (char*)malloc(sizeof(ExecPath)+valsize);
-	PIDFile = (char*)malloc(sizeof(char*)+valsize);
-	char *t = "test.txt";
-	int ret = svc_read_config(t);
-	if(ret != 0){
-		printf("ExecPath: %s: %d\n", ExecPath, strlen(ExecPath));
-	}
-	return 1;
-}*/
 
 
 /*
@@ -195,28 +198,23 @@ pid_t svc_exec_service(char *exec_path, char **exec_params)
  *
  * @service_name - service name
  */
-int svc_start_service(char *service_name)
+int svc_start_service(const char *service_name)
 {
-	char service_path[256];
-	service_path[0] = '\0';
+	struct passwd *pwd = getpwnam(name);
+	printf("Starting %s...\n", service_name);
+	printf("ExecPath: %s\nPIDFile: %s\nOwner: %s\nExecParams: %s\n", ExecPath, PIDFile, Owner, ExecParams);
 
-	sprintf(service_path, "%s/%s", SVC_SERVICES, service_name);
-	
-	if(strlen(instance) > 0){
-		sprintf(service_path, "%s/%s", service_path, instance);
-	}
+	return 0;	
+}
 
-	printf("%s\n", service_path);
-	
-	DIR *svpath;
-	struct dirent *ep;
-	svpath = opendir(service_path);
-
-	if(svpath == NULL){
-		printf("Service or instance not found.\n");
-		return 1;
-	}
-
+/*
+ * evc_stop_service - stop service and/or instances
+ *
+ * @service_name - service or instance name
+ */
+int svc_stop_service(const char *service_name)
+{
+	printf("Stopping %s... \n", service_name);
 	return 0;	
 }
 
@@ -303,7 +301,6 @@ int main(int argc, char **argv)
 	 */
 
 	if(!strcmp("start", argv[1])) {
-		
 		if(argc < 2)
 			show_help();
 
@@ -338,10 +335,10 @@ int main(int argc, char **argv)
 
 		service = argv[2];
 
-		int svc_read = svc_read_service_cfg(service);
+		int svc_read = svc_read_config(service);
 		
-		if(svc_read)
-			svc_stop_service();
+		if(svc_read != 0)
+			svc_stop_service(service);
 
 		if(!svc_read){
 			printf("Cannot stop service \"%s\" daemon.\n", service);
@@ -351,14 +348,10 @@ int main(int argc, char **argv)
 	if(!strcmp("status", argv[1])) {
 		if(argc < 2)
 			show_help();
-
-			
 	}
 	parse_argv(argc, argv);
 	argc -= optind;
 	argv += optind;
-
-	svc_start_service(service);
 
 	return 0;
 }
