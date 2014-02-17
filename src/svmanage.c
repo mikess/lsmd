@@ -172,9 +172,18 @@ int svc_read_config(const char *service)
 	 */
 	char const * _buffer = buffer;
 	while((res = sscanf(_buffer, "%[^\n=]=%[^\n]", var, val)) > -1) {
-		if(res == 2 && var[0] != '#')
-		if(!parse_config(var, val, line)){
-			exit -1;
+		if(res == 2 && var[0] != '#'){
+			int lenval = strlen(val);
+			if(val[0] == '\"')
+				val[0] = '\0';
+	
+			if(val[lenval-1] == '\"')
+				val[lenval-1] = '\0';
+
+
+			if(!parse_config(var, val, line)){
+				exit -1;
+			}
 		}
 		_buffer = strstr(_buffer, "\n")+1;
 		line++;
@@ -336,6 +345,7 @@ int main(int argc, char **argv)
 			printf("%s - Service or instance not found.\n", service);
 			return 1;
 		}
+		printf("ExecPath -> %s\n", ExecParams);
 	}
 
 	if(!strcmp("stop", argv[1])) {
