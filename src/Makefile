@@ -1,13 +1,10 @@
-all: clean svc
+CFLAGS ?= -ansi -O2 -fomit-frame-pointer
+USRSBIN	= svmanage
 
-svc:
-	gcc -o svc_start svc_start.c
-	gcc -o svc_path  svc_path.c
+all:	$(USRSBIN)
 
-lsmd:	
-	gcc -o lsmd lsmd.c
+svmanage: svmanage.c lsmd.h
+	$(CC) $(CFLAGS) svmanage.c -o svmanage
 
 clean:
-	rm -f svc_start lsmd svc_path
-
-
+	rm -f $(USRSBIN)

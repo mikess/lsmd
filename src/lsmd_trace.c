@@ -30,7 +30,7 @@ int lsmd_process_check(pid_t pid)
 {
 
 	if(pid < 1){
-		return -EFAULT;
+		return 0;
 	}
 
 	if(pid == 1){

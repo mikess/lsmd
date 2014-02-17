@@ -24,7 +24,6 @@ static const char *instance = NULL;
 
 static const char *exec_path = NULL;
 static const char *exec_params = NULL;
-static const char *pidfile = NULL;
 
 static const int valsize = 5000;
 
@@ -40,6 +39,8 @@ int exec_pid = -1;
  */
 char *Name = NULL;
 char *Depends = NULL;
+char *Conflicts = NULL;
+char *InitScript = NULL;
 char *ExecPath = NULL;
 char *ExecParams = NULL;
 char *PIDFile = NULL;
@@ -69,6 +70,14 @@ int parse_config(char var[100], char val[valsize], int line)
 		sprintf(Depends,"%s", val);
 		return 1;
 	}else
+	if(!strcmp(var, "Conflicts")){
+		sprintf(Conflicts,"%s", val);
+		return 1;
+	}else
+	if(!strcmp(var, "InitScript")){
+		sprintf(InitScript,"%s", val);
+		return 1;
+	}else
 	if(!strcmp(var, "ExecPath")){
 		sprintf(ExecPath,"%s", val);
 		/*
@@ -91,6 +100,7 @@ int parse_config(char var[100], char val[valsize], int line)
 	}else
 	if(!strcmp(var, "Group")){
 		sprintf(Group,"%s", val);
+		return 1;
 		/* Verify exists */
 	}else{
 		printf("Error at line #%d - unrecognized variable %s\n", line, var);
@@ -145,6 +155,8 @@ int svc_read_config(const char *service)
 	buffer = (char*) malloc(sizeof(char)*(filesize +1));
 	Name = (char*)malloc(sizeof(char*)+valsize);
 	Depends = (char*)malloc(sizeof(char*)+valsize);
+	Conflicts = (char*)malloc(sizeof(char*)+valsize);
+	InitScript = (char*)malloc(sizeof(char*)+valsize);
 	ExecPath = (char*)malloc(sizeof(char*)+valsize);
 	ExecParams = (char*)malloc(sizeof(char*)+valsize);
 	PIDFile = (char*)malloc(sizeof(char*)+valsize);
@@ -184,10 +196,10 @@ int svc_read_config(const char *service)
  *
  */
 
-pid_t svc_exec_service(char *exec_path, char **exec_params)
+void svc_exec_service(char *exec_path, char **exec_params)
 {
 	struct stat sexec = {0};
-	
+	struct pid_t;
 	if(stat(exec_path, &sexec) == 0){
 		execv(exec_path, exec_params);
 	}
@@ -200,10 +212,7 @@ pid_t svc_exec_service(char *exec_path, char **exec_params)
  */
 int svc_start_service(const char *service_name)
 {
-	struct passwd *pwd = getpwnam(name);
-	printf("Starting %s...\n", service_name);
-	printf("ExecPath: %s\nPIDFile: %s\nOwner: %s\nExecParams: %s\n", ExecPath, PIDFile, Owner, ExecParams);
-
+/*	struct passwd *pwd = getpwnam(name); */
 	return 0;	
 }
 
@@ -250,16 +259,16 @@ void parse_argv(int argc, char * const *argv)
 			f_start = 1;
 			break;
 		case 'n':
-			service = optarg;
+			Name = optarg;
 			break;
 		case 'i':
-			instance = optarg;
+			Name = optarg;
 			break;
 		case 'p':
-			pidfile = optarg;
+			PIDFile = optarg;
 			break;
 		case 'e':
-			exec_path = optarg;
+			ExecPath = optarg;
 			break;
 		case 'P':
 			exec_params = optarg;
