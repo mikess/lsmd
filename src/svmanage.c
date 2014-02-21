@@ -20,9 +20,9 @@
 #include "lsmd.h"
 
 static const char *service = NULL;
-static const char *instance = NULL;
+/*static const char *instance = NULL;*/
 
-static const char *exec_path = NULL;
+/*static const char *exec_path = NULL;*/
 static const char *exec_params = NULL;
 
 static const int valsize = 5000;
@@ -148,7 +148,6 @@ int svc_read_config(const char *service)
 	filesize = ftell(fd);
 	fseek(fd,0,0);
 	
-	printf("FS: %d\n", filesize);
 	/*
 	 * Allocate memory for buffers and variables
 	 */
@@ -172,17 +171,18 @@ int svc_read_config(const char *service)
 	 */
 	char const * _buffer = buffer;
 	while((res = sscanf(_buffer, "%[^\n=]=%[^\n]", var, val)) > -1) {
+		if(var[0] == '['){
+			printf("Block %s\n", var);
+		}else
 		if(res == 2 && var[0] != '#'){
 			int lenval = strlen(val);
 			if(val[0] == '\"')
-				val[0] = '\0';
-	
+				val[0] = ' ';
+
 			if(val[lenval-1] == '\"')
-				val[lenval-1] = '\0';
-
-
-			if(!parse_config(var, val, line)){
-				exit -1;
+				val[lenval-1] = ' ';
+				if(!parse_config(var, val, line)){
+				return -1;
 			}
 		}
 		_buffer = strstr(_buffer, "\n")+1;
@@ -192,7 +192,6 @@ int svc_read_config(const char *service)
 	free(buffer);
 	return 1;
 }
-
 
 /*
  * svc_exec_service - execute a service
@@ -221,6 +220,33 @@ void svc_exec_service(char *exec_path, char **exec_params)
  */
 int svc_start_service(const char *service_name)
 {
+	/*
+	 * 1. create structure for new service in /run/svcs/<type>/<service>/
+	 * 2. register service into /run/svcs/<type>/<service>/reg
+	 * 3. start service
+	 */
+	
+	char *cmdline;
+	int uidtmp;
+
+	if(!sprintf(uidtmp, "%d", Owner)){
+		
+	}
+
+	if(ExecPath == NULL && InitScript == NULL)
+		return 0;
+
+	if(InitScript != NULL)
+		sprintf(&cmdline, "/bin/sh %s", InitScript);
+	
+	if(InitScript == NULL){
+		sprintf(&cmdline, "%s", ExecPath);
+
+	if(ExecParams != NULL)
+		sprintf(&cmdline, "%s %s", cmdline, ExecParams);
+	
+
+		
 /*	struct passwd *pwd = getpwnam(name); */
 	return 0;	
 }
@@ -345,7 +371,7 @@ int main(int argc, char **argv)
 			printf("%s - Service or instance not found.\n", service);
 			return 1;
 		}
-		printf("ExecPath -> %s\n", ExecParams);
+		printf("ExecPath -> %s\n", ExecPath);
 	}
 
 	if(!strcmp("stop", argv[1])) {
@@ -374,4 +400,3 @@ int main(int argc, char **argv)
 
 	return 0;
 }
-
