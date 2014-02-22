@@ -109,16 +109,15 @@ do_help(void)
 {
 	printf("\
 start-stop-daemon for Debian Linux - small and fast C version written by\n\
-Marek Michalkiewicz <marekm@i17linuxb.ists.pwr.wroc.pl>, public domain.\n"
-VERSION "\n\
-\n\
-Usage:
-    start-stop-daemon -S|--start options ... -- arguments ...\n\
-    start-stop-daemon -K|--stop options ...\n\
-    start-stop-daemon -H|--help\n\
-    start-stop-daemon -V|--version\n\
-\n\
-Options (at least one of --exec|--pidfile|--user is required):
+Marek Michalkiewicz <marekm@i17linuxb.ists.pwr.wroc.pl>, public domain.\n" VERSION "\n \
+\n \
+Usage: \
+    start-stop-daemon -S|--start options ... -- arguments ...\n \
+    start-stop-daemon -K|--stop options ...\n \
+    start-stop-daemon -H|--help\n \
+    start-stop-daemon -V|--version\n \
+\n \
+Options (at least one of --exec|--pidfile|--user is required): \
     -x|--exec <executable>       program to start/check if it is running\n\
     -p|--pidfile <pid-file>      pid file to check\n\
     -u|--user <username>|<uid>   stop this user's processes\n\
