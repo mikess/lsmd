@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdarg.h>
+#include <sys/types.h>
 #include <signal.h>
 #include <errno.h>
 #include <sys/stat.h>
@@ -15,11 +16,10 @@ int main(int argc, char **argv)
 {
         argc -= optind;
         argv += optind;
-	
 	int p = getpid();
-	printf("%d\n", p);
-	
+	printf("P: %d\n", getpid());
 	char *st = "/usr/sbin/sshd";
 	*--argv = st;
 	execve(st, argv, NULL);	
+	printf("P: %d\n", getpid());
 }
