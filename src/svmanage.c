@@ -47,8 +47,19 @@ char *PIDFile = NULL;
 char *Owner = NULL;
 char *Group = NULL;
 
+int is_Name = 0;
+int is_Depends = 0;
+int is_Conflicts = 0;
+int is_InitScript = 0;
+int is_ExecPath = 0;
+int is_ExecParams = 0;
+int is_PIDFile = 0;
+int is_Owner = 0;
+int is_Group = 0;
 
 void show_help(void);
+void pexit(char *message);
+void pwarn(char *message);
 
 /*
  * parse_config - match variable name and assigne value
@@ -64,22 +75,27 @@ int parse_config(char var[100], char val[valsize], int line)
 {
 	if(!strcmp(var, "Name")){
 		sprintf(Name,"%s", val);
+		is_Name = 1;
 		return 1;
 	}else
 	if(!strcmp(var, "Depends")){
 		sprintf(Depends,"%s", val);
+		is_Depends = 1;
 		return 1;
 	}else
 	if(!strcmp(var, "Conflicts")){
 		sprintf(Conflicts,"%s", val);
+		is_Conflicts = 1;
 		return 1;
 	}else
 	if(!strcmp(var, "InitScript")){
 		sprintf(InitScript,"%s", val);
+		is_InitScript = 1;
 		return 1;
 	}else
 	if(!strcmp(var, "ExecPath")){
 		sprintf(ExecPath,"%s", val);
+		is_ExecPath = 1;
 		/*
 		 * Check exists and executable
 		 */
@@ -87,19 +103,23 @@ int parse_config(char var[100], char val[valsize], int line)
 	}else
 	if(!strcmp(var, "ExecParams")){
 		sprintf(ExecParams,"%s", val);
+		is_ExecParams = 1;
 		return 1;
 	}else
 	if(!strcmp(var, "PIDFile")){
 		sprintf(PIDFile,"%s", val);
+		is_PIDFile = 1;
 		return 1;
 	}else
 	if(!strcmp(var, "Owner")){
 		sprintf(Owner,"%s", val);
+		is_Owner = 1;
 		/* Verify exists */
 		return 1;
 	}else
 	if(!strcmp(var, "Group")){
 		sprintf(Group,"%s", val);
+		is_Group = 1;
 		return 1;
 		/* Verify exists */
 	}else{
@@ -171,9 +191,6 @@ int svc_read_config(const char *service)
 	 */
 	char const * _buffer = buffer;
 	while((res = sscanf(_buffer, "%[^\n=]=%[^\n]", var, val)) > -1) {
-		if(var[0] == '['){
-			printf("Block %s\n", var);
-		}else
 		if(res == 2 && var[0] != '#'){
 			int lenval = strlen(val);
 			if(val[0] == '\"')
@@ -188,7 +205,12 @@ int svc_read_config(const char *service)
 		_buffer = strstr(_buffer, "\n")+1;
 		line++;
 	}
-	
+
+	/* Verify settings */
+	if(!is_Name) pexit("No Name variable provided!\n");
+	if(!is_ExecPath && !is_InitScript) pexit("No ExecPath or InitScript variable provided!\n");
+	if(!is_PIDFile) pwarn("No PIDFile provided, i can't observe service without PID!\n");
+
 	free(buffer);
 	return 1;
 }
@@ -225,27 +247,40 @@ int svc_start_service(const char *service_name)
 	 * 2. register service into /run/svcs/<type>/<service>/reg
 	 * 3. start service
 	 */
-	
-	char *cmdline;
-	int uidtmp;
 
-	if(!sprintf(uidtmp, "%d", Owner)){
-		
+	char *cmdline;
+	char *tmpuid;
+	cmdline = (char*)malloc(sizeof(char*)*1024);
+	
+	if(ExecPath == NULL && InitScript == NULL){
+		free(cmdline);
+		return 0;
 	}
 
-	if(ExecPath == NULL && InitScript == NULL)
-		return 0;
-
-	if(InitScript != NULL)
-		sprintf(&cmdline, "/bin/sh %s", InitScript);
+	if(strlen(InitScript) != 1)
+		sprintf(cmdline, "/bin/sh %s", InitScript);
 	
-	if(InitScript == NULL){
-		sprintf(&cmdline, "%s", ExecPath);
+	if(InitScript == NULL)
+		sprintf(cmdline, "%s", ExecPath);
 
 	if(ExecParams != NULL)
-		sprintf(&cmdline, "%s %s", cmdline, ExecParams);
+		sprintf(cmdline, "%s %s", cmdline, ExecParams);
 	
-
+	if(is_Owner){
+		if(sprintf(tmpuid, "%u", Owner) != 0){
+			struct passwd *pw;
+			struct uid_t uid;
+			int c;
+			uid = geteuid();
+			pw = getpwuid(tmpuid);
+			if (pw){
+				puts (pw->pw_name);
+				exit (EXIT_SUCCESS);
+			}
+			fprintf(stderr,"%s: cannot find username for UID %u\n",
+			_PROGRAM_NAME, (unsigned) uid);
+		}
+	}
 		
 /*	struct passwd *pwd = getpwnam(name); */
 	return 0;	
@@ -333,6 +368,27 @@ void show_help(void)
 	exit(1);
 }
 
+/*
+ * pexit - show message and exit process
+ *
+ * @message - a text message to print out
+ */
+void pexit(char *message)
+{
+	printf("%s\n", message);
+	exit(1);
+}
+
+/*
+ * pwarn - show warning message / debug message
+ *
+ * @message - a text message to print out
+ */
+void pwarn(char *message)
+{
+	printf("%s\n", message);
+}
+
 int main(int argc, char **argv)
 {
 	if(argc == 1){
@@ -352,9 +408,10 @@ int main(int argc, char **argv)
 
 		int svc_read = svc_read_config(service);
 
-		if(svc_read == 1)
+		if(svc_read == 1){
 			svc_start_service(service);
-		
+		}
+
 		/*
 		 * If configuration file isn't completed or
 		 * syntax error occured
